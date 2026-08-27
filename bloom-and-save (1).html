@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloom &amp; Save</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FFF7F0;
+    --card: #FFFFFF;
+    --card-hi: #FFF9F4;
+    --pink: #FF8FAB;
+    --pink-deep: #FF6F9C;
+    --pink-soft: #FFE1EC;
+    --lavender: #C9B6E4;
+    --lavender-soft: #EDE4F8;
+    --mint: #7FD8B0;
+    --mint-soft: #DFF7EC;
+    --butter: #FFD778;
+    --sky: #A8D8F0;
+    --ink: #5B4B49;
+    --muted: #B0A29C;
+    --line: rgba(255, 143, 171, 0.28);
+    --shadow: 0 12px 28px rgba(255, 143, 171, 0.16);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 8% 5%, rgba(255,214,228,0.55) 0, transparent 40%),
+      radial-gradient(ellipse at 95% 12%, rgba(201,182,228,0.4) 0, transparent 42%),
+      radial-gradient(ellipse at 50% 100%, rgba(127,216,176,0.25) 0, transparent 55%),
+      var(--bg);
+    font-family: 'Quicksand', sans-serif;
+    color: var(--ink);
+    padding: 30px 18px 70px;
+  }
+  h1,h2,h3{ font-family:'Fredoka', sans-serif; font-weight:600; margin:0; }
+  .wrap{ max-width: 900px; margin: 0 auto; }
+
+  .eyebrow{
+    text-align:center; font-size:12px; letter-spacing:0.18em; color: var(--pink-deep);
+    text-transform:uppercase; margin-bottom: 10px; font-weight:600;
+  }
+
+  /* HERO */
+  .hero{
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
+    padding: 32px 20px 28px;
+    border: 2px dashed var(--line);
+    border-radius: 32px;
+    background: linear-gradient(180deg, #FFFFFF, #FFFBF7);
+    position: relative;
+    box-shadow: var(--shadow);
+  }
+  .seal{ flex-shrink:0; }
+  .hero h1{ font-size: 38px; color: var(--pink-deep); letter-spacing:0.01em; }
+  .hero .tagline{
+    font-family:'Quicksand', sans-serif; font-weight:600; font-size:15.5px;
+    color: var(--muted); margin:0;
+  }
+  .hr-gold{
+    width:70px; height:3px; margin: 6px auto 0; border-radius:4px;
+    background: linear-gradient(90deg, var(--pink-soft), var(--pink), var(--mint));
+  }
+
+  /* TABS */
+  .tabs{
+    display:flex; justify-content:center; gap: 10px; margin: 26px 0 26px;
+    flex-wrap: wrap; padding-bottom: 0;
+  }
+  .tab-btn{
+    font-family:'Fredoka', sans-serif; font-size:13.5px; font-weight:500;
+    border: 2px solid var(--line); cursor:pointer; background: var(--card); color: var(--muted);
+    padding: 10px 20px; border-radius: 999px; transition: all .2s ease;
+  }
+  .tab-btn .num{ display:none; }
+  .tab-btn.active{ color: #fff; background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: transparent; box-shadow: 0 6px 16px rgba(255,111,156,0.35); }
+  .tab-btn:hover:not(.active){ border-color: var(--pink); color: var(--pink-deep); }
+
+  .panel{ display:none; animation: fadeIn .3s ease; }
+  .panel.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:translateY(0);} }
+
+  /* STAT STRIP */
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:12px; margin-bottom:28px; }
+  .stat-card{ background: var(--card); padding:18px 18px; border-radius:20px; border: 2px solid var(--line); box-shadow: var(--shadow); }
+  .stat-card .label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600;}
+  .stat-card .value{ font-size:22px; font-weight:700; font-family:'Fredoka',sans-serif; margin-top:6px; color: var(--pink-deep); }
+
+  /* CARD / SECTION */
+  .section-card{
+    background: var(--card); border-radius:24px; padding:26px 28px;
+    box-shadow: var(--shadow); margin-bottom:20px; border:2px solid var(--line);
+  }
+  .section-card h2{ margin:0 0 18px; font-size:19px; letter-spacing:0.01em; color: var(--pink-deep); }
+  .section-card h2 .mark{ color: var(--mint); margin-right:8px; }
+
+  /* FORM */
+  .form-grid{ display:grid; grid-template-columns: 2fr 1.2fr 1fr 1fr auto; gap:12px; align-items:end; }
+  .form-grid-shop{ grid-template-columns: 1.6fr 1fr 0.8fr 0.8fr 0.9fr auto; }
+  @media (max-width: 720px){ .form-grid, .form-grid-shop{ grid-template-columns: 1fr 1fr; } }
+  label{ font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em;}
+  input, select{
+    width:100%; padding:11px 14px; border-radius:14px; border:2px solid var(--line);
+    font-family:'Quicksand',sans-serif; font-weight:600; font-size:14px; color: var(--ink); background: #FFFBF8;
+  }
+  input:focus, select:focus{ outline:none; border-color: var(--pink); }
+  select option{ background:#FFFFFF; color: var(--ink); }
+  .btn{
+    border:none; cursor:pointer; font-family:'Fredoka',sans-serif; font-weight:600;
+    padding:11px 22px; border-radius:999px; font-size:13.5px;
+    background: linear-gradient(135deg, var(--pink), var(--pink-deep)); color:#fff; white-space:nowrap;
+    transition: all .2s ease; box-shadow: 0 6px 14px rgba(255,111,156,0.3);
+  }
+  .btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 18px rgba(255,111,156,0.4); }
+  .btn.ghost{
+    background: transparent; color: var(--muted); border:2px solid var(--line);
+    padding: 7px 13px; font-size:11.5px; box-shadow:none;
+  }
+  .btn.ghost:hover{ color: var(--pink-deep); border-color: var(--pink); transform:none; }
+  .btn.outline{ background: transparent; color: var(--pink-deep); border: 2px solid var(--pink); box-shadow:none; }
+  .btn.outline:hover{ background: var(--pink-soft); }
+
+  /* CATEGORY GROUPS */
+  .cat-group{ margin-top: 22px; }
+  .cat-title{
+    display:flex; align-items:center; gap:9px; font-family:'Fredoka',sans-serif;
+    font-size:15px; font-weight:600; color: var(--ink); margin-bottom:10px;
+  }
+  .cat-title::before{ content:"✿"; color: var(--pink); font-size:13px; }
+  .cat-title .count{ font-size:11px; color:var(--muted); font-family:'Quicksand',sans-serif; font-weight:600; }
+
+  .item-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background: var(--card-hi); border-radius:16px; padding:13px 16px; margin-bottom:8px;
+    border: 2px solid var(--line);
+  }
+  .item-left{ display:flex; align-items:center; gap:12px; }
+  .prio-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .prio-High{ background: var(--pink); }
+  .prio-Medium{ background: var(--lavender); }
+  .prio-Low{ background: var(--mint); }
+  .item-name{ font-weight:600; font-size:14.5px; font-family:'Quicksand',sans-serif; }
+  .item-meta{ font-size:11px; color: var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; font-weight:600;}
+  .item-right{ display:flex; align-items:center; gap:12px; }
+  .price-tag{ font-family:'Fredoka',serif; font-weight:600; font-size:15px; color: var(--pink-deep); }
+  .buy-badge{
+    font-size:10.5px; font-weight:700; padding:5px 11px; border-radius:999px; letter-spacing:.03em;
+    border: 2px solid var(--line); color: var(--muted); white-space:nowrap;
+  }
+  .buy-badge.now{ border-color: var(--mint); color: #2E9C6C; background: var(--mint-soft); }
+
+  .check-circle{
+    width:22px; height:22px; border-radius:50%; border:2px solid var(--pink-soft);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    background: #fff; flex-shrink:0; font-size:11px; color: #fff;
+    transition: all .15s ease;
+  }
+  .check-circle:hover{ border-color: var(--pink); }
+  .check-circle.checked{ background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: var(--pink); }
+
+  .item-row.purchased{ opacity:.6; }
+  .item-row.purchased .item-name{ text-decoration: line-through; color: var(--muted); }
+
+  .section-toggle{
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    margin-top:26px; padding-top:18px; border-top: 2px dashed var(--line);
+  }
+  .section-toggle h3{ margin:0; font-size:12.5px; font-family:'Fredoka',sans-serif; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+  .collapse-arrow{ transition: transform .2s ease; color: var(--pink); font-size:11px; }
+  .collapse-arrow.open{ transform: rotate(180deg); }
+  .collapsible{ display:none; margin-top:12px; }
+  .collapsible.open{ display:block; }
+
+  .inv-projection{ font-size:11px; color: #2E9C6C; font-weight:700; margin-top:3px; letter-spacing:.02em; }
+
+  .snapshot-card{ background: linear-gradient(135deg, #FFF6FA, #F6FBF8); border:2px solid var(--line); border-radius:20px; padding:20px 22px; margin-bottom:26px; box-shadow: var(--shadow); }
+  .snapshot-title{ font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:12px; font-weight:700; }
+  .snapshot-row{ display:flex; justify-content:space-between; align-items:baseline; font-size:13.5px; margin-bottom:8px; }
+  .snapshot-row span:first-child{ color:var(--ink); font-family:'Quicksand',sans-serif; font-weight:600; }
+  .snapshot-row span:last-child{ color:var(--pink-deep); font-family:'Fredoka',sans-serif; font-weight:600; font-size:15px; }
+  .snapshot-tip{ font-family:'Quicksand',sans-serif; font-weight:600; font-style:normal; font-size:14px; color:var(--muted); margin-top:12px; padding-top:12px; border-top:2px dashed var(--line); line-height:1.5; }
+  .snapshot-tip b{ color: var(--pink-deep); font-weight:700; }
+
+  .empty-state{ text-align:center; padding: 34px 10px; color: var(--muted); font-size:13.5px; font-weight:600; }
+  .empty-state .mark-big{ display:block; color: var(--pink); font-size:26px; margin-bottom:10px; }
+
+  /* PROGRESS */
+  .progress-wrap{ background: var(--pink-soft); border-radius:999px; height:10px; overflow:hidden; margin-top:10px;}
+  .progress-bar{ height:100%; border-radius:999px; background: linear-gradient(90deg, var(--mint), var(--pink)); transition: width .5s ease; }
+  .progress-label{ font-size:12.5px; color:var(--ink); margin-top:6px; font-weight:600; }
+
+  /* INVESTMENT BAR */
+  .inv-bar-row{ margin-bottom:14px; }
+  .inv-bar-top{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px; font-weight:700;}
+  .inv-bar-bg{ background: #F5EFEA; border-radius:999px; height:9px; overflow:hidden; }
+  .inv-bar-fill{ height:100%; border-radius:999px; }
+
+  .note-text{ font-family:'Quicksand',sans-serif; font-weight:600; font-size:15px; color: var(--muted); line-height:1.6; margin:0; }
+  .note-text b{ color: var(--pink-deep); font-weight:700; }
+
+  .foot-note{ text-align:center; font-size:12px; color: var(--muted); margin-top:30px; font-weight:600; }
+  ::placeholder{ color:#C9BDB6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">✦ made just for you ✦</div>
+  <div class="hero">
+    <svg class="seal" width="64" height="64" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="40" r="26" fill="#FFE1EC"/>
+      <g>
+        <ellipse cx="40" cy="20" rx="9" ry="13" fill="#FF8FAB"/>
+        <ellipse cx="40" cy="60" rx="9" ry="13" fill="#FF8FAB"/>
+        <ellipse cx="20" cy="40" rx="13" ry="9" fill="#FFD778"/>
+        <ellipse cx="60" cy="40" rx="13" ry="9" fill="#FFD778"/>
+        <ellipse cx="25.5" cy="25.5" rx="9" ry="12" fill="#C9B6E4" transform="rotate(-45 25.5 25.5)"/>
+        <ellipse cx="54.5" cy="54.5" rx="9" ry="12" fill="#C9B6E4" transform="rotate(-45 54.5 54.5)"/>
+        <ellipse cx="54.5" cy="25.5" rx="9" ry="12" fill="#7FD8B0" transform="rotate(45 54.5 25.5)"/>
+        <ellipse cx="25.5" cy="54.5" rx="9" ry="12" fill="#7FD8B0" transform="rotate(45 25.5 54.5)"/>
+      </g>
+      <circle cx="40" cy="40" r="10" fill="#FFF3D6"/>
+      <circle cx="40" cy="40" r="10" stroke="#FF6F9C" stroke-width="1.5"/>
+    </svg>
+    <h1>Bloom &amp; Save</h1>
+    <p class="tagline">your wishlist, your little goals, your growing garden of savings 🌱</p>
+    <div class="hr-gold"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="shop">🎀 Wishlist</button>
+    <button class="tab-btn" data-tab="income">🌟 Savings Goals</button>
+    <button class="tab-btn" data-tab="invest">🌿 Investments</button>
+  </div>
+
+  <div class="stats" id="statStrip"></div>
+
+  <!-- SHOPPING PANEL -->
+  <div class="panel active" id="panel-shop">
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Add Something Sweet</h2>
+      <div class="form-grid form-grid-shop">
+        <div>
+          <label>Item</label>
+          <input id="s-name" placeholder="e.g. cozy reading lamp" />
+        </div>
+        <div>
+          <label>Category</label>
+          <select id="s-cat">
+            <option>Beauty</option>
+            <option>Technology</option>
+            <option>Fashion</option>
+            <option>Home &amp; Living</option>
+            <option>Books</option>
+            <option>Travel</option>
+            <option>Plants</option>
+            <option>Groceries</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Price</label>
+          <input id="s-price" type="number" min="0" placeholder="0" />
+        </div>
+        <div>
+          <label>Priority</label>
+          <select id="s-prio">
+            <option>High</option>
+            <option selected>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div>
+          <label>How Often</label>
+          <select id="s-freq">
+            <option value="One-time" selected>One-Time</option>
+            <option value="Weekly">Every Week</option>
+            <option value="Monthly">Every Month</option>
+          </select>
+        </div>
+        <button class="btn" type="button" onclick="addShoppingItem()">Add ✨</button>
+      </div>
+
+      <div class="section-toggle" onclick="toggleCategorySection()">
+        <h3 id="categoryToggleLabel">+ Add a category</h3>
+        <span class="collapse-arrow" id="categoryArrow">▾</span>
+      </div>
+      <div class="collapsible" id="categoryCollapsible">
+        <div class="form-grid" style="grid-template-columns: 2fr auto; margin-top:4px;">
+          <div>
+            <label>New category name</label>
+            <input id="new-cat-name" placeholder="e.g. Candles" />
+          </div>
+          <button class="btn outline" type="button" onclick="addCategory()">Add category</button>
+        </div>
+        <div id="customCatList" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="snapshot-card" id="snapshotCard"></div>
+
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Every Week</h2>
+      <div id="weeklyList"></div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Every Month</h2>
+      <div id="monthlyList"></div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Wishlist</h2>
+      <div id="shopList"></div>
+
+      <div class="section-toggle" onclick="togglePurchasedSection()">
+        <h3 id="purchasedToggleLabel">Got it! (0)</h3>
+        <span class="collapse-arrow" id="purchasedArrow">▾</span>
+      </div>
+      <div class="collapsible" id="purchasedCollapsible">
+        <div id="purchasedList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCOME PANEL -->
+  <div class="panel" id="panel-income">
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Savings Goals</h2>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+        <div>
+          <label>Monthly income goal</label>
+          <input id="g-target" type="number" min="0" placeholder="e.g. 80000" />
+        </div>
+        <div>
+          <label>Current monthly income</label>
+          <input id="g-current" type="number" min="0" placeholder="e.g. 60000" />
+        </div>
+        <div>
+          <label>Monthly savings set aside</label>
+          <input id="g-savings" type="number" min="0" placeholder="e.g. 5000" />
+        </div>
+        <div>
+          <label>Already saved so far</label>
+          <input id="g-balance" type="number" min="0" placeholder="e.g. 2000" />
+        </div>
+      </div>
+      <button class="btn outline" type="button" style="margin-top:14px;" onclick="saveGoals()">Save Goals 💾</button>
+      <span id="goalsSavedFlash" style="display:none; margin-left:10px; font-size:12.5px; font-weight:700; color:#2E9C6C;">Saved ✓</span>
+
+      <div style="margin-top:24px;">
+        <div class="progress-label" id="incomeProgressLabel">Income progress</div>
+        <div class="progress-wrap"><div class="progress-bar" id="incomeProgressBar" style="width:0%"></div></div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div class="progress-label" id="affordProgressLabel">Wishlist affordability</div>
+        <div class="progress-wrap"><div class="progress-bar" id="affordProgressBar" style="width:0%; background: linear-gradient(90deg, var(--lavender), var(--pink));"></div></div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="mark">✦</span>A Little Note</h2>
+      <p class="note-text">
+        Your <b>monthly savings</b> amount sets the pace — visit the Wishlist tab to see each
+        item's projected date, ordered by priority and price. Anything already <b>saved</b> gets applied first. 💛
+      </p>
+    </div>
+  </div>
+
+  <!-- INVEST PANEL -->
+  <div class="panel" id="panel-invest">
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Add an Investment</h2>
+      <div class="form-grid">
+        <div>
+          <label>Name</label>
+          <input id="i-name" placeholder="e.g. Index Fund SIP" />
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="i-cat">
+            <option>Stocks</option>
+            <option>Mutual Funds</option>
+            <option>Fixed Deposit</option>
+            <option>Gold</option>
+            <option>Crypto</option>
+            <option>Real Estate</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input id="i-amount" type="number" min="0" placeholder="0" />
+        </div>
+        <div>
+          <label>Monthly?</label>
+          <select id="i-freq">
+            <option>One-time</option>
+            <option>Monthly</option>
+          </select>
+        </div>
+        <div>
+          <label>Expected return %/yr</label>
+          <input id="i-rate" type="number" min="0" step="0.1" placeholder="e.g. 10" />
+        </div>
+        <button class="btn" type="button" onclick="addInvestment()">Add ✨</button>
+      </div>
+      <span id="invAddedFlash" style="display:none; margin-top:8px; font-size:12.5px; font-weight:700; color:#2E9C6C;">Added ✓</span>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="mark">✦</span>Where Your Money Lives</h2>
+      <div id="invBars"></div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="mark">✦</span>All Investments</h2>
+      <div id="invList"></div>
+    </div>
+  </div>
+
+  <div class="foot-note">saved safely, just for you 💛</div>
+</div>
+
+<script>
+let shopping = [];
+let goals = { target:0, current:0, savings:0, balance:0 };
+let investments = [];
+let purchasedOpen = false;
+let categoryOpen = false;
+const baseCategories = ["Beauty","Technology","Fashion","Home & Living","Books","Travel","Plants","Groceries"];
+let customCategories = [];
+
+const catEmoji = {
+  "Beauty":"", "Technology":"", "Fashion":"", "Home & Living":"",
+  "Books":"", "Travel":"", "Other":""
+};
+const invColors = {
+  "Stocks":"#FF8FAB", "Mutual Funds":"#C9B6E4", "Fixed Deposit":"#7FD8B0",
+  "Gold":"#FFD778", "Crypto":"#A8D8F0", "Real Estate":"#F3B8A0", "Other":"#B0A29C"
+};
+const prioRank = { High:0, Medium:1, Low:2 };
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+async function loadAll(){
+  try{ const r = await window.storage.get('shopping-items'); shopping = r ? JSON.parse(r.value) : []; }catch(e){ shopping = []; }
+  try{ const r = await window.storage.get('income-goals'); goals = r ? JSON.parse(r.value) : {target:0,current:0,savings:0,balance:0}; }catch(e){ goals = {target:0,current:0,savings:0,balance:0}; }
+  try{ const r = await window.storage.get('investments'); investments = r ? JSON.parse(r.value) : []; }catch(e){ investments = []; }
+  try{ const r = await window.storage.get('custom-categories'); customCategories = r ? JSON.parse(r.value) : []; }catch(e){ customCategories = []; }
+
+  document.getElementById('g-target').value = goals.target || '';
+  document.getElementById('g-current').value = goals.current || '';
+  document.getElementById('g-savings').value = goals.savings || '';
+  document.getElementById('g-balance').value = goals.balance || '';
+
+  renderCategorySelect();
+  renderAll();
+}
+
+function allCategories(){
+  return [...baseCategories, ...customCategories, "Other"];
+}
+
+function renderCategorySelect(){
+  const select = document.getElementById('s-cat');
+  const prev = select.value;
+  select.innerHTML = allCategories().map(c => `<option>${escapeHtml(c)}</option>`).join('');
+  if(allCategories().includes(prev)) select.value = prev;
+
+  const listEl = document.getElementById('customCatList');
+  if(customCategories.length === 0){
+    listEl.innerHTML = `<div style="font-size:12px; color:var(--muted); font-weight:600;">No custom categories yet — add your first one above 🌸</div>`;
+  } else {
+    listEl.innerHTML = customCategories.map(c => `
+      <span style="display:inline-flex; align-items:center; gap:6px; background:var(--pink-soft); color:var(--pink-deep); border-radius:999px; padding:6px 12px; margin:0 6px 6px 0; font-size:12.5px; font-weight:700;">
+        ${escapeHtml(c)}
+        <span style="cursor:pointer;" title="Remove category" onclick="deleteCategory('${c.replace(/'/g,"\\'")}')">✕</span>
+      </span>`).join('');
+  }
+}
+
+function toggleCategorySection(){
+  categoryOpen = !categoryOpen;
+  document.getElementById('categoryCollapsible').classList.toggle('open', categoryOpen);
+  document.getElementById('categoryArrow').classList.toggle('open', categoryOpen);
+}
+
+function addCategory(){
+  const input = document.getElementById('new-cat-name');
+  const name = input.value.trim();
+  if(!name) return;
+  const exists = allCategories().some(c => c.toLowerCase() === name.toLowerCase());
+  if(exists){ input.value=''; return; }
+  customCategories.push(name);
+  persist('custom-categories', customCategories);
+  input.value = '';
+  renderCategorySelect();
+  document.getElementById('s-cat').value = name;
+}
+
+function deleteCategory(name){
+  customCategories = customCategories.filter(c => c !== name);
+  persist('custom-categories', customCategories);
+  renderCategorySelect();
+}
+
+async function persist(key, val){
+  try{ await window.storage.set(key, JSON.stringify(val)); }
+  catch(e){ console.error('Storage save failed', e); }
+}
+
+function addShoppingItem(){
+  const name = document.getElementById('s-name').value.trim();
+  const cat = document.getElementById('s-cat').value;
+  const price = parseFloat(document.getElementById('s-price').value) || 0;
+  const prio = document.getElementById('s-prio').value;
+  const freq = document.getElementById('s-freq').value;
+  if(!name){
+    const input = document.getElementById('s-name');
+    input.style.borderColor = '#FF6F9C';
+    input.placeholder = 'Please enter an item name first';
+    setTimeout(()=>{ input.style.borderColor = ''; }, 1500);
+    return;
+  }
+  shopping.push({ id: uid(), name, cat, price, prio, freq, added: Date.now(), purchased:false, lastDoneAt:null });
+  document.getElementById('s-name').value='';
+  document.getElementById('s-price').value='';
+  persist('shopping-items', shopping);
+  renderAll();
+}
+
+function deleteShoppingItem(id){
+  shopping = shopping.filter(i => i.id !== id);
+  persist('shopping-items', shopping);
+  renderAll();
+}
+
+function togglePurchased(id){
+  const item = shopping.find(i => i.id === id);
+  if(!item) return;
+  item.purchased = !item.purchased;
+  item.purchasedAt = item.purchased ? Date.now() : null;
+  persist('shopping-items', shopping);
+  renderAll();
+}
+
+function toggleCycleDone(id){
+  const item = shopping.find(i => i.id === id);
+  if(!item) return;
+  item.lastDoneAt = isDoneThisCycle(item) ? null : Date.now();
+  persist('shopping-items', shopping);
+  renderAll();
+}
+
+function isDoneThisCycle(item){
+  if(!item.lastDoneAt) return false;
+  const last = new Date(item.lastDoneAt);
+  const now = new Date();
+  if(item.freq === 'Weekly'){
+    return (now - last) / 86400000 < 7;
+  }
+  if(item.freq === 'Monthly'){
+    return last.getMonth() === now.getMonth() && last.getFullYear() === now.getFullYear();
+  }
+  return false;
+}
+
+function cycleNote(item){
+  if(!isDoneThisCycle(item)) return item.freq === 'Weekly' ? 'Not marked this week' : 'Not marked this month';
+  const last = new Date(item.lastDoneAt);
+  if(item.freq === 'Weekly'){
+    const daysLeft = Math.max(1, 7 - Math.floor((Date.now()-last)/86400000));
+    return `Resets in ${daysLeft} day${daysLeft===1?'':'s'}`;
+  }
+  return 'Resets next month';
+}
+
+function togglePurchasedSection(){
+  purchasedOpen = !purchasedOpen;
+  document.getElementById('purchasedCollapsible').classList.toggle('open', purchasedOpen);
+  document.getElementById('purchasedArrow').classList.toggle('open', purchasedOpen);
+}
+
+function saveGoals(){
+  goals.target = parseFloat(document.getElementById('g-target').value) || 0;
+  goals.current = parseFloat(document.getElementById('g-current').value) || 0;
+  goals.savings = parseFloat(document.getElementById('g-savings').value) || 0;
+  goals.balance = parseFloat(document.getElementById('g-balance').value) || 0;
+  persist('income-goals', goals);
+  renderAll();
+  flashConfirm('goalsSavedFlash');
+}
+
+function flashConfirm(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = 'inline';
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(()=>{ el.style.display = 'none'; }, 2000);
+}
+
+function addInvestment(){
+  const name = document.getElementById('i-name').value.trim();
+  const cat = document.getElementById('i-cat').value;
+  const amount = parseFloat(document.getElementById('i-amount').value) || 0;
+  const freq = document.getElementById('i-freq').value;
+  const rate = parseFloat(document.getElementById('i-rate').value) || 0;
+  if(!name){
+    const input = document.getElementById('i-name');
+    input.style.borderColor = '#FF6F9C';
+    input.placeholder = 'Please enter a name first';
+    setTimeout(()=>{ input.style.borderColor = ''; }, 1500);
+    return;
+  }
+  investments.push({ id: uid(), name, cat, amount, freq, rate, added: Date.now() });
+  document.getElementById('i-name').value='';
+  document.getElementById('i-amount').value='';
+  document.getElementById('i-rate').value='';
+  persist('investments', investments);
+  renderAll();
+  flashConfirm('invAddedFlash');
+}
+
+function deleteInvestment(id){
+  investments = investments.filter(i => i.id !== id);
+  persist('investments', investments);
+  renderAll();
+}
+
+function fmt(n){
+  return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0});
+}
+
+function monthLabel(monthsAhead){
+  const d = new Date();
+  d.setMonth(d.getMonth() + monthsAhead);
+  return d.toLocaleDateString(undefined, { month:'short', year:'numeric' });
+}
+
+function renderStats(){
+  const pending = shopping.filter(i=>!i.purchased);
+  const purchased = shopping.filter(i=>i.purchased);
+  const totalPending = pending.reduce((s,i)=>s+i.price,0);
+  const totalPurchased = purchased.reduce((s,i)=>s+i.price,0);
+  const totalInvested = investments.reduce((s,i)=>s+i.amount,0);
+  const strip = document.getElementById('statStrip');
+  strip.innerHTML = `
+    <div class="stat-card"><div class="label">Still Wishing For</div><div class="value">${pending.length}</div></div>
+    <div class="stat-card"><div class="label">Saving Up For These</div><div class="value">${fmt(totalPending)}</div></div>
+    <div class="stat-card"><div class="label">Treated Myself To</div><div class="value">${fmt(totalPurchased)}</div></div>
+    <div class="stat-card"><div class="label">Growing Nicely</div><div class="value">${fmt(totalInvested)}</div></div>
+  `;
+}
+
+function itemFreq(item){ return item.freq || 'One-time'; }
+
+function renderSnapshot(){
+  const weeklyItems = shopping.filter(i => itemFreq(i) === 'Weekly');
+  const monthlyItems = shopping.filter(i => itemFreq(i) === 'Monthly');
+  const weeklyTotal = weeklyItems.reduce((s,i)=>s+i.price,0);
+  const monthlyTotal = monthlyItems.reduce((s,i)=>s+i.price,0);
+  const monthlyEquivalent = monthlyTotal + weeklyTotal * 4.33;
+  const el = document.getElementById('snapshotCard');
+
+  if(weeklyItems.length === 0 && monthlyItems.length === 0){
+    el.innerHTML = `<div class="snapshot-title">Weekly &amp; Monthly Treats</div>
+      <p class="snapshot-tip" style="margin-top:0; padding-top:0; border-top:none;">Nothing regular here yet — add the little things you buy every week or month above, so they're planned for separately from the big wishlist items. 🌷</p>`;
+    return;
+  }
+
+  let tip = '';
+  if(goals.current > 0){
+    const leftover = goals.current - monthlyEquivalent;
+    tip = leftover >= 0
+      ? `After your regular treats, roughly <b>${fmt(leftover)}</b> of your monthly income is free for the wishlist or savings. 🌼`
+      : `Your weekly and monthly treats currently add up to more than your income — worth a peek before adding new wishlist goals.`;
+  } else {
+    tip = `Set your monthly income under Savings Goals to see how much is left over after these treats.`;
+  }
+
+  el.innerHTML = `
+    <div class="snapshot-title">Weekly &amp; Monthly Treats</div>
+    <div class="snapshot-row"><span>Every week</span><span>${fmt(weeklyTotal)}</span></div>
+    <div class="snapshot-row"><span>Every month</span><span>${fmt(monthlyTotal)}</span></div>
+    <div class="snapshot-row"><span>Combined, per month</span><span>${fmt(monthlyEquivalent)}</span></div>
+    <p class="snapshot-tip">${tip}</p>
+  `;
+}
+
+function renderCycleList(containerId, items, cycleLabel){
+  const container = document.getElementById(containerId);
+  if(items.length === 0){
+    container.innerHTML = `<div class="empty-state">Nothing here yet — add one above and tag it "${cycleLabel === 'Weekly' ? 'Every Week' : 'Every Month'}". 🌱</div>`;
+    return;
+  }
+  const ordered = [...items].sort((a,b)=> (prioRank[a.prio]-prioRank[b.prio]) || (a.price-b.price));
+  let html = '';
+  ordered.forEach(item=>{
+    const done = isDoneThisCycle(item);
+    html += `<div class="item-row ${done ? 'purchased':''}">
+      <div class="item-left">
+        <span class="check-circle ${done?'checked':''}" title="${done?'Undo':'Mark done'}" onclick="toggleCycleDone('${item.id}')">${done?'✓':''}</span>
+        <span class="prio-dot prio-${item.prio}"></span>
+        <div>
+          <div class="item-name">${escapeHtml(item.name)}</div>
+          <div class="item-meta">${escapeHtml(item.cat)}</div>
+          <div class="cycle-note" style="font-size:10.5px;color:var(--pink-deep);font-weight:600;margin-top:2px;">${cycleNote(item)}</div>
+        </div>
+      </div>
+      <div class="item-right">
+        <span class="price-tag">${fmt(item.price)}</span>
+        <button class="btn ghost" onclick="deleteShoppingItem('${item.id}')">Remove</button>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderShopping(){
+  renderSnapshot();
+
+  const weeklyItems = shopping.filter(i => itemFreq(i) === 'Weekly');
+  const monthlyItems = shopping.filter(i => itemFreq(i) === 'Monthly');
+  renderCycleList('weeklyList', weeklyItems, 'Weekly');
+  renderCycleList('monthlyList', monthlyItems, 'Monthly');
+
+  const container = document.getElementById('shopList');
+  const purchasedContainer = document.getElementById('purchasedList');
+  const oneTime = shopping.filter(i => itemFreq(i) === 'One-time');
+  const pending = oneTime.filter(i=>!i.purchased);
+  const purchased = oneTime.filter(i=>i.purchased);
+
+  document.getElementById('purchasedToggleLabel').textContent = `Got it! (${purchased.length})`;
+
+  if(pending.length === 0){
+    container.innerHTML = `<div class="empty-state"><span class="mark-big">✿</span>${oneTime.length===0 ? "Your wishlist is empty — add the first thing you're dreaming of above." : 'Everything on your wishlist has been checked off! 🎉'}</div>`;
+  } else {
+    const ordered = [...pending].sort((a,b)=> (prioRank[a.prio]-prioRank[b.prio]) || (a.price-b.price));
+    let cumulative = 0;
+    const buyByMap = {};
+    ordered.forEach(item=>{
+      cumulative += item.price;
+      if(goals.savings > 0 || goals.balance > 0){
+        const remaining = Math.max(0, cumulative - (goals.balance||0));
+        const months = remaining === 0 ? 0 : (goals.savings>0 ? Math.ceil(remaining / goals.savings) : null);
+        buyByMap[item.id] = months === null ? null : (months === 0 ? 'now' : monthLabel(months));
+      } else {
+        buyByMap[item.id] = null;
+      }
+    });
+
+    const groups = {};
+    pending.forEach(i=>{ (groups[i.cat] = groups[i.cat]||[]).push(i); });
+
+    let html = '';
+    Object.keys(groups).sort().forEach(cat=>{
+      const items = groups[cat].sort((a,b)=> (prioRank[a.prio]-prioRank[b.prio]) || (a.price-b.price));
+      html += `<div class="cat-group">
+        <div class="cat-title">${escapeHtml(cat)} <span class="count">${items.length}</span></div>`;
+      items.forEach(item=>{
+        const buyBy = buyByMap[item.id];
+        html += `<div class="item-row">
+          <div class="item-left">
+            <span class="check-circle" title="Mark as got it" onclick="togglePurchased('${item.id}')"></span>
+            <span class="prio-dot prio-${item.prio}"></span>
+            <div>
+              <div class="item-name">${escapeHtml(item.name)}</div>
+              <div class="item-meta">${item.prio} Priority</div>
+            </div>
+          </div>
+          <div class="item-right">
+            ${buyBy === 'now' ? `<span class="buy-badge now">Get it now! 🎉</span>` : buyBy ? `<span class="buy-badge">By ${buyBy}</span>` : `<span class="buy-badge">Add a savings goal</span>`}
+            <span class="price-tag">${fmt(item.price)}</span>
+            <button class="btn ghost" onclick="deleteShoppingItem('${item.id}')">Remove</button>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  if(purchased.length === 0){
+    purchasedContainer.innerHTML = `<div class="empty-state" style="padding:16px;">Nothing checked off yet. ✨</div>`;
+  } else {
+    let html = '';
+    [...purchased].sort((a,b)=>(b.purchasedAt||0)-(a.purchasedAt||0)).forEach(item=>{
+      html += `<div class="item-row purchased">
+        <div class="item-left">
+          <span class="check-circle checked" title="Undo" onclick="togglePurchased('${item.id}')">✓</span>
+          <div>
+            <div class="item-name">${escapeHtml(item.name)}</div>
+            <div class="item-meta">${escapeHtml(item.cat)}</div>
+          </div>
+        </div>
+        <div class="item-right">
+          <span class="price-tag">${fmt(item.price)}</span>
+          <button class="btn ghost" onclick="deleteShoppingItem('${item.id}')">Remove</button>
+        </div>
+      </div>`;
+    });
+    purchasedContainer.innerHTML = html;
+  }
+}
+
+function renderGoals(){
+  const pct = goals.target > 0 ? Math.min(100, (goals.current/goals.target)*100) : 0;
+  document.getElementById('incomeProgressBar').style.width = pct + '%';
+  document.getElementById('incomeProgressLabel').textContent =
+    goals.target > 0
+      ? `${fmt(goals.current)} of ${fmt(goals.target)} monthly income goal (${pct.toFixed(0)}%)`
+      : `Set a monthly income goal to track progress`;
+
+  const pendingTotal = shopping.filter(i=>itemFreq(i)==='One-time' && !i.purchased).reduce((s,i)=>s+i.price,0);
+  const afPct = pendingTotal > 0 ? Math.min(100, ((goals.balance||0)/pendingTotal)*100) : 0;
+  document.getElementById('affordProgressBar').style.width = afPct + '%';
+  document.getElementById('affordProgressLabel').textContent =
+    pendingTotal > 0
+      ? `${fmt(goals.balance||0)} saved of ${fmt(pendingTotal)} pending wishlist (${afPct.toFixed(0)}%)`
+      : `No pending wishlist items to save toward yet`;
+}
+
+function renderInvestments(){
+  const listEl = document.getElementById('invList');
+  const barsEl = document.getElementById('invBars');
+
+  if(investments.length === 0){
+    listEl.innerHTML = `<div class="empty-state"><span class="mark-big">✿</span>No investments recorded yet.</div>`;
+    barsEl.innerHTML = `<div class="empty-state" style="padding:12px;">Nothing to show yet.</div>`;
+    return;
+  }
+
+  const totals = {};
+  let grand = 0;
+  investments.forEach(i=>{ totals[i.cat] = (totals[i.cat]||0) + i.amount; grand += i.amount; });
+
+  let barsHtml = '';
+  Object.keys(totals).sort((a,b)=>totals[b]-totals[a]).forEach(cat=>{
+    const pct = grand > 0 ? (totals[cat]/grand*100) : 0;
+    barsHtml += `<div class="inv-bar-row">
+      <div class="inv-bar-top"><span>${escapeHtml(cat)}</span><span>${fmt(totals[cat])} &middot; ${pct.toFixed(0)}%</span></div>
+      <div class="inv-bar-bg"><div class="inv-bar-fill" style="width:${pct}%; background:${invColors[cat]||'#B0A29C'}"></div></div>
+    </div>`;
+  });
+  barsEl.innerHTML = barsHtml;
+
+  let listHtml = '';
+  [...investments].sort((a,b)=>b.added-a.added).forEach(i=>{
+    const projection = projectedValue(i, 5);
+    listHtml += `<div class="item-row">
+      <div class="item-left">
+        <span class="prio-dot" style="background:${invColors[i.cat]||'#B0A29C'}"></span>
+        <div>
+          <div class="item-name">${escapeHtml(i.name)}</div>
+          <div class="item-meta">${escapeHtml(i.cat)} &middot; ${i.freq}${i.rate ? ' &middot; ' + i.rate + '%/yr' : ''}</div>
+          ${projection ? `<div class="inv-projection">~${fmt(projection)} in 5 years 🌿</div>` : ''}
+        </div>
+      </div>
+      <div class="item-right">
+        <span class="price-tag">${fmt(i.amount)}</span>
+        <button class="btn ghost" onclick="deleteInvestment('${i.id}')">Remove</button>
+      </div>
+    </div>`;
+  });
+  listEl.innerHTML = listHtml;
+}
+
+function projectedValue(inv, years){
+  if(!inv.rate || inv.rate <= 0) return null;
+  const annualRate = inv.rate / 100;
+  if(inv.freq === 'Monthly'){
+    const r = annualRate / 12;
+    const n = years * 12;
+    return inv.amount * ((Math.pow(1+r, n) - 1) / r) * (1+r);
+  } else {
+    return inv.amount * Math.pow(1 + annualRate, years);
+  }
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renderAll(){
+  renderStats();
+  renderShopping();
+  renderGoals();
+  renderInvestments();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+loadAll();
+</script>
+</body>
+</html>
